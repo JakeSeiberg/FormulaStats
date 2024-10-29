@@ -9,7 +9,8 @@ import Foundation
 
 
 //create url
-func apiCall(){
+/* DOES NOT WORK AT ALL YET W.I.P
+func apiCall() -> any{
     let urlStr = "http://ergast.com/api/f1/2008/5/results"
     guard let url = URL(string: urlStr)else{
         print("Invalid URL")
@@ -39,4 +40,8 @@ func apiCall(){
     }
     
     task.resume()
+    
+    //not sure if task is the right thing to return
+    //need to figure out how this actually pulls data to be returned
 }
+*/
