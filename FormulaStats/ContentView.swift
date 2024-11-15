@@ -33,10 +33,11 @@ struct ContentView: View {
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .frame(width: 80)
                 }
+                Text("The driver you chose is: \(firstYear) \(firstName)")
                 
                 // Still need to change this to not display via a loop so I can actually write the data points I need. or just make an array with the diffent data categories
                 ForEach(firstDataPoints.indices, id: \.self) { index in
-                    Text("Data Point \(index + 1): \(firstDataPoints[index])")
+                    Text("Stat \(index + 1): \(firstDataPoints[index])")
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
@@ -61,9 +62,10 @@ struct ContentView: View {
                         .frame(width: 80)
                 }
                 
+                Text("The driver you chose is: \(secondYear) \(secondName)")
                 // Same as above need to change to actually display the correct data points
                 ForEach(secondDataPoints.indices, id: \.self) { index in
-                    Text("Data Point \(index + 1): \(secondDataPoints[index])")
+                    Text("Stat \(index + 1): \(secondDataPoints[index])")
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
