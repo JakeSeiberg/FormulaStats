@@ -48,7 +48,7 @@ struct ContentView: View {
             
             // Second Name and Year
             VStack(alignment: .leading, spacing: 10) {
-                Text("Second Name and Year")
+                Text("Input Second Drivers Name and Season")
                     .font(.headline)
                 
                 HStack {
