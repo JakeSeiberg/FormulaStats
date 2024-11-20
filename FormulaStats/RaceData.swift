@@ -7,6 +7,20 @@ import Foundation
 //
 
 
+struct TestData {
+    let year: Int
+}
+
+func fetchRaceData() async throws -> Data{ //pulled from random video not sure this does anything. Didnt finish video so this is most likely a bunch of bullshit
+    let url = URL(string: "http://ergast.com/api/f1/2008/5/results")!
+    
+    let (data,_) = try await URLSession.shared.data(from: url)
+    
+    return data //this is def wrong but who knows
+}
+
+
+
 
 //create url
 /* DOES NOT WORK AT ALL YET W.I.P

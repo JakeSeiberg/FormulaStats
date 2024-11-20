@@ -73,6 +73,46 @@ struct ContentView: View {
             .background(Color(.systemGray6))
             .cornerRadius(8)
             
+            VStack(){ //eventually make this a button that takes to a navigation so this looks better
+                ViewThatFits{
+                    Text("\(firstYear) \(firstName) V.S. \(secondYear) \(secondName)")
+                        .font(.subheadline)
+                        .lineLimit(1)
+                        .padding()
+                }
+                HStack{
+                    Spacer()
+                    Text("\(firstDataPoints[0])")
+                    Spacer()
+                    Text("\(secondDataPoints[0])")
+                    Spacer()
+                }
+                Spacer()
+                HStack{
+                    Spacer()
+                    Text("\(firstDataPoints[1])")
+                    Spacer()
+                    Text("\(secondDataPoints[1])")
+                    Spacer()
+                }
+                Spacer()
+                HStack{
+                    Spacer()
+                    Text("\(firstDataPoints[2])")
+                    Spacer()
+                    Text("\(secondDataPoints[2])")
+                    Spacer()
+                }
+                Spacer()
+                HStack{
+                    Spacer()
+                    Text("\(firstDataPoints[3])")
+                    Spacer()
+                    Text("\(secondDataPoints[3])")
+                    Spacer()
+                }
+            }
+            
             Spacer()
         }
         .padding()
