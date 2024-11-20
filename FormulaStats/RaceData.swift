@@ -11,7 +11,7 @@ struct TestData {
     let year: Int
 }
 
-func fetchRaceData() async throws -> Data{ //pulled from random video not sure this does anything. Didnt finish video so this is most likely a bunch of bullshit
+func fetchRaceData() async throws -> Data{ //pulled from random video not sure this does anything. Didnt finish video so this is most likely wrong
     let url = URL(string: "http://ergast.com/api/f1/2008/5/results")!
     
     let (data,_) = try await URLSession.shared.data(from: url)
