@@ -49,7 +49,3 @@ func getDriversList(season: String, completion: @escaping ([String]?) -> Void) {
     }
     task.resume()
 }
-
-func getDriverList(year: String){
-    
-}

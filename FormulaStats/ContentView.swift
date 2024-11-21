@@ -17,9 +17,8 @@ struct ContentView: View {
     @State private var secondDriverList: [String] = []
     
     // Data points placeholders for demonstration
-    @State private var firstDataPoints: [String] = ["Data 1", "Data 2", "Data 3", "Data 4"]
-    @State private var secondDataPoints: [String] = ["Data 1", "Data 2", "Data 3", "Data 4"]
-    
+
+  
     var body: some View {
         
         VStack(spacing: 20) {
@@ -98,6 +97,7 @@ struct ContentView: View {
             .background(Color(.systemGray6))
             .cornerRadius(8)
             
+            //Need to implement another API call that takes a name and returns the driver ID so I can make the calls for specific data such as RaceData
             VStack(){ //eventually make this a button that takes to a navigation so this looks better
                 ViewThatFits{
                     Text("\(firstYear) \(firstName) V.S. \(secondYear) \(secondName)")
@@ -107,33 +107,33 @@ struct ContentView: View {
                 }
                 HStack{
                     Spacer()
-                    Text("\(firstDataPoints[0])")
+                    Text("Wins:")
                     Spacer()
-                    Text("\(secondDataPoints[0])")
-                    Spacer()
-                }
-                Spacer()
-                HStack{
-                    Spacer()
-                    Text("\(firstDataPoints[1])")
-                    Spacer()
-                    Text("\(secondDataPoints[1])")
+                    Text("Wins:")
                     Spacer()
                 }
                 Spacer()
                 HStack{
                     Spacer()
-                    Text("\(firstDataPoints[2])")
+                    Text("Points:")
                     Spacer()
-                    Text("\(secondDataPoints[2])")
+                    Text("Points:")
                     Spacer()
                 }
                 Spacer()
                 HStack{
                     Spacer()
-                    Text("\(firstDataPoints[3])")
+                    Text("Drivers Standings:")
                     Spacer()
-                    Text("\(secondDataPoints[3])")
+                    Text("Drivers Standings:")
+                    Spacer()
+                }
+                Spacer()
+                HStack{
+                    Spacer()
+                    Text("Pole Positions:")
+                    Spacer()
+                    Text("Pole Positions:")
                     Spacer()
                 }
             }

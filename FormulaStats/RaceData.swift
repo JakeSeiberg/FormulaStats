@@ -16,7 +16,6 @@ struct MRData: Decodable { //struct to hold json data from API
     let total: String
 }
 
-
 func getDriverWins(season: String, driverId: String, completion: @escaping (Int?) -> Void) {
     //define the url string with given parameters
     let urlString = "https://ergast.com/api/f1/\(season)/drivers/\(driverId)/results/1.json"
