@@ -7,55 +7,44 @@ import Foundation
 //
 
 
-struct TestData {
-    let year: Int
+
+struct DriverWins: Decodable { //struct to hold wins
+    let MRData: MRData
 }
 
-func fetchRaceData() async throws -> Data{ //pulled from random video not sure this does anything. Didnt finish video so this is most likely wrong
-    let url = URL(string: "http://ergast.com/api/f1/2008/5/results")!
-    
-    let (data,_) = try await URLSession.shared.data(from: url)
-    
-    return data //this is def wrong but who knows
+struct MRData: Decodable { //struct to hold json data from API
+    let total: String
 }
 
 
-
-
-//create url
-/* DOES NOT WORK AT ALL YET W.I.P
-func apiCall() -> any{
-    let urlStr = "http://ergast.com/api/f1/2008/5/results"
-    guard let url = URL(string: urlStr)else{
-        print("Invalid URL")
+func getDriverWins(season: String, driverId: String, completion: @escaping (Int?) -> Void) {
+    //define the url string with given parameters
+    let urlString = "https://ergast.com/api/f1/\(season)/drivers/\(driverId)/results/1.json"
+    guard let url = URL(string: urlString) else { //create url object
+        completion(nil)
         return
     }
-    
-    //create urlsession
-    
-    let task = URLSession.shared.dataTask(with: url){ (data, response, error) in
-        //handle error
-        if let error = error{
-            print("Error: \(error.localizedDescription)")
+
+    let task = URLSession.shared.dataTask(with: url) { data, response, error in
+        guard let data = data, error == nil else { //confirm data pulled correctly
+            completion(nil)
             return
         }
-        
-        //Handle response and data
-        if let data = data{
-            do{
-                //parse json
-                let json = try JSONSerialization.jsonObject(with: data, options: [])
-                print("Response JSON: \(json)")
+
+        do {
+            let decoder = JSONDecoder()
+            let result = try decoder.decode(DriverWins.self, from: data)
+            if let totalWins = Int(result.MRData.total) {
+                completion(totalWins)
+            } else {
+                completion(nil)
             }
-            catch{
-                print("Failed to parse JSON: \(error.localizedDescription)")
-            }
+        } catch {
+            completion(nil)
         }
     }
-    
     task.resume()
-    
-    //not sure if task is the right thing to return
-    //need to figure out how this actually pulls data to be returned
 }
-*/
+
+    
+
