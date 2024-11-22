@@ -25,6 +25,10 @@ struct Driver: Decodable {
     let familyName: String
 }
 
+struct ErgastResponse: Decodable {
+    let MRData: MRData
+}
+
 func getDriversList(season: String, completion: @escaping ([String]?) -> Void) {
     let urlString = "https://ergast.com/api/f1/\(season)/drivers.json"
     guard let url = URL(string: urlString) else {
@@ -49,3 +53,33 @@ func getDriversList(season: String, completion: @escaping ([String]?) -> Void) {
     }
     task.resume()
 }
+
+func getDriverId(season: String, givenName: String, familyName: String, completion: @escaping (String?) -> Void) {
+    let urlString = "https://ergast.com/api/f1/\(season)/drivers.json"
+    guard let url = URL(string: urlString) else {
+        completion(nil)
+        return
+    }
+
+    let task = URLSession.shared.dataTask(with: url) { data, response, error in
+        guard let data = data, error == nil else {
+            completion(nil)
+            return
+        }
+
+        do {
+            let decoder = JSONDecoder()
+            let result = try decoder.decode(DriverList.self, from: data)
+            if let driver = result.MRData.DriverTable.Drivers.first(where: { $0.givenName.lowercased() == givenName.lowercased() && $0.familyName.lowercased() == familyName.lowercased() }) {
+                completion(driver.driverId)
+            } else {
+                completion(nil)
+            }
+        } catch {
+            completion(nil)
+        }
+    }
+    task.resume()
+}
+
+

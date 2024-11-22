@@ -13,11 +13,14 @@ struct ContentView: View {
     @State private var secondName = ""
     @State private var secondYear = ""
     
+    @State private var firstDriverID: String = ""
+    @State private var secondDriverID: String = ""
+    
     @State private var firstDriverList: [String] = []
     @State private var secondDriverList: [String] = []
     
-    // Data points placeholders for demonstration
-
+    @State private var firstDriverWins: Int = -1
+    @State private var secondDriverWins: Int = -1
   
     var body: some View {
         
@@ -46,20 +49,21 @@ struct ContentView: View {
                     }
                     else{
                         Picker(selection: $firstName, label: Text("Pick")) {
-        
+                            
                             ForEach(firstDriverList, id: \.self) { driver in
-                                    Text(driver)
-                                }
+                                Text(driver)
                             }
                         }
                     }
-                
                 }
-                .padding()
-                .background(Color(.systemGray6))
-                .cornerRadius(8)
+                
+            }
+            .padding()
+            .background(Color(.systemGray6))
+            .cornerRadius(8)
             
             Divider()
+            
             
             // Second Name and Year
             VStack(alignment: .leading, spacing: 10) {
@@ -97,53 +101,96 @@ struct ContentView: View {
             .background(Color(.systemGray6))
             .cornerRadius(8)
             
-            //Need to implement another API call that takes a name and returns the driver ID so I can make the calls for specific data such as RaceData
-            VStack(){ //eventually make this a button that takes to a navigation so this looks better
-                ViewThatFits{
-                    Text("\(firstYear) \(firstName) V.S. \(secondYear) \(secondName)")
-                        .font(.subheadline)
-                        .lineLimit(1)
-                        .padding()
+            //need to ping twice for some reason. TODO: fix this bug
+            if secondName != "" && firstName != "" {
+                Button("Get Race Data") {
+                    let driverOneF = splitName(firstName).0
+                    let driverOneL = splitName(firstName).1
+                    let driverTwoF = splitName(secondName).0
+                    let driverTwoL = splitName(secondName).1
+                    
+                    getDriverId(season: firstYear, givenName: driverOneF, familyName: driverOneL) { driverId in
+                        if let driverId = driverId {
+                            firstDriverID = driverId
+                        } else {
+                            print("Driver not found")
+                        }
+                    }
+                    getDriverId(season: secondYear, givenName: driverTwoF, familyName: driverTwoL) { driverId in
+                        if let driverId = driverId {
+                            secondDriverID = driverId
+                        } else {
+                            print("Driver not found")
+                        }
+                    }
+                    
+                    getDriverWins(season: firstYear, driverId: firstDriverID){ wins in
+                        if let wins = wins {
+                            firstDriverWins = wins
+                        } else {
+                            print("Driver not found")
+                        }
+                    }
+                    getDriverWins(season: secondYear, driverId: secondDriverID){ wins in
+                        if let wins = wins {
+                            secondDriverWins = wins
+                        } else {
+                            print("Driver not found")
+                        }
+                    }
+                    
                 }
-                HStack{
-                    Spacer()
-                    Text("Wins:")
-                    Spacer()
-                    Text("Wins:")
-                    Spacer()
-                }
-                Spacer()
-                HStack{
-                    Spacer()
-                    Text("Points:")
-                    Spacer()
-                    Text("Points:")
-                    Spacer()
-                }
-                Spacer()
-                HStack{
-                    Spacer()
-                    Text("Drivers Standings:")
-                    Spacer()
-                    Text("Drivers Standings:")
-                    Spacer()
-                }
-                Spacer()
-                HStack{
-                    Spacer()
-                    Text("Pole Positions:")
-                    Spacer()
-                    Text("Pole Positions:")
-                    Spacer()
-                }
+                
             }
             
+            VStack(){ //eventually make this a button that takes to a navigation so this looks better...maybe...low priority
+                if firstDriverWins != -1 && secondDriverWins != -1{
+                    
+                    ViewThatFits{
+                        Text("\(firstYear) \(firstName) V.S. \(secondYear) \(secondName)")
+                            .font(.subheadline)
+                            .lineLimit(1)
+                            .padding()
+                    }
+                    HStack{
+                        Spacer()
+                        Text("Wins: \(firstDriverWins)")
+                        Spacer()
+                        Text("Wins: \(secondDriverWins)")
+                        Spacer()
+                    }
+                    Spacer()
+                    HStack{
+                        Spacer()
+                        Text("Points:")
+                        Spacer()
+                        Text("Points:")
+                        Spacer()
+                    }
+                    Spacer()
+                    HStack{
+                        Spacer()
+                        Text("Drivers Standings:")
+                        Spacer()
+                        Text("Drivers Standings:")
+                        Spacer()
+                    }
+                    Spacer()
+                    HStack{
+                        Spacer()
+                        Text("Pole Positions:")
+                        Spacer()
+                        Text("Pole Positions:")
+                        Spacer()
+                    }
+                }
+            }
             Spacer()
         }
-        .padding()
-            
     }
+            
 }
+
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
