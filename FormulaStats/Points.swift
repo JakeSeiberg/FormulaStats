@@ -1,23 +1,23 @@
 import Foundation
 
 //created a new file for points because the amount of structs required was extremely messy in RaceData
-struct DriverStandingsResponse: Codable {
+struct DriverStandingsResponse: Decodable {
     let MRData: PointsMRData
 }
 
-struct PointsMRData: Codable {
+struct PointsMRData: Decodable {
     let StandingsTable: StandingsTable
 }
 
-struct StandingsTable: Codable {
+struct StandingsTable: Decodable {
     let StandingsLists: [StandingsList]
 }
 
-struct StandingsList: Codable {
+struct StandingsList: Decodable {
     let DriverStandings: [DriverStanding]
 }
 
-struct DriverStanding: Codable {
+struct DriverStanding: Decodable {
     let points: String
 }
 
