@@ -13,6 +13,9 @@ struct ContentView: View {
     @State private var secondName = ""
     @State private var secondYear = ""
     
+    @FocusState private var focusYear1: Bool
+    @FocusState private var focusYear2: Bool
+    
     @State private var firstDriverID: String = ""
     @State private var secondDriverID: String = ""
     
@@ -21,6 +24,9 @@ struct ContentView: View {
     
     @State private var firstDriverWins: Int = -1
     @State private var secondDriverWins: Int = -1
+    
+    @State private var firstDriverPts: Float = -1
+    @State private var secondDriverPts: Float = -1
   
     var body: some View {
         
@@ -35,7 +41,10 @@ struct ContentView: View {
                         .keyboardType(.numberPad)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .frame(width: 80)
+                        .focused($focusYear1)
                     Button("Get Drivers") {
+                        focusYear1 = false
+                        focusYear2 = false
                         getDriversList(season: firstYear) { drivers in
                             if let drivers = drivers {
                                 firstDriverList = drivers
@@ -75,7 +84,10 @@ struct ContentView: View {
                         .keyboardType(.numberPad)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .frame(width: 80)
+                        .focused($focusYear2)
                     Button("Get Drivers") {
+                        focusYear1 = false
+                        focusYear2 = false
                         getDriversList(season: secondYear) { drivers in
                             if let drivers = drivers {
                                 secondDriverList = drivers
@@ -101,14 +113,25 @@ struct ContentView: View {
             .background(Color(.systemGray6))
             .cornerRadius(8)
             
+            
+                
             //need to ping twice for some reason. TODO: fix this bug
             if secondName != "" && firstName != "" {
+                
                 Button("Get Race Data") {
                     let driverOneF = splitName(firstName).0
                     let driverOneL = splitName(firstName).1
+                    
                     let driverTwoF = splitName(secondName).0
                     let driverTwoL = splitName(secondName).1
                     
+                    var firstRaces = 0
+                    var secondRaces = 0
+                    
+                    //this gives warning but still works, working on clearing it
+                    var timer: Timer?
+                    var count: Int = 0
+                                       
                     getDriverId(season: firstYear, givenName: driverOneF, familyName: driverOneL) { driverId in
                         if let driverId = driverId {
                             firstDriverID = driverId
@@ -123,28 +146,79 @@ struct ContentView: View {
                             print("Driver not found")
                         }
                     }
-                    
-                    getDriverWins(season: firstYear, driverId: firstDriverID){ wins in
-                        if let wins = wins {
-                            firstDriverWins = wins
-                        } else {
-                            print("Driver not found")
-                        }
-                    }
-                    getDriverWins(season: secondYear, driverId: secondDriverID){ wins in
-                        if let wins = wins {
-                            secondDriverWins = wins
-                        } else {
-                            print("Driver not found")
+                    getRacesInSeason(season: secondYear, driverId: secondDriverID){ ttlRaces in
+                        if let ttlRaces = ttlRaces{
+                            secondRaces = ttlRaces
+                        }else{
+                            print("error fetching total races")
                         }
                     }
                     
+                    getRacesInSeason(season: firstYear, driverId: firstDriverID){ ttlRaces in
+                        if let ttlRaces = ttlRaces{
+                            firstRaces = ttlRaces
+                        }else{
+                            print("error fetching total races")
+                        }
+                    }
+                    //first driver data
+                    timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true){timer in
+                        getDriverWins(season: firstYear, driverId: firstDriverID){ wins in
+                            if let wins = wins {
+                                firstDriverWins = wins
+                            } else {
+                                print("Driver not found")
+                            }
+                        }
+                        getPointsInSeason(season: firstYear, driverID: firstDriverID){ pts in
+                            if let pts = pts {
+                                firstDriverPts = pts
+                            } else {
+                                print("Driver not found")
+                            }
+                        }
+                        if firstDriverWins != firstRaces || count > 4{
+                            timer.invalidate()
+                        }
+                        else{
+                            count += 1
+                        }
+                    }
+                    
+                    count = 0
+                    
+                    //second driver data
+                    timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true){timer in
+                        getDriverWins(season: secondYear, driverId: secondDriverID){ wins in
+                            if let wins = wins {
+                                secondDriverWins = wins
+                            } else {
+                                print("Driver not found")
+                            }
+                        }
+                        getPointsInSeason(season: secondYear, driverID: secondDriverID){ pts in
+                            if let pts = pts {
+                                secondDriverPts = pts
+                            }
+                            else{
+                                print("Driver not found")
+                            }
+                        }
+                        if secondDriverWins != secondRaces || count > 4{
+                            timer.invalidate()
+                        }
+                        else{
+                            count += 1
+                        }
+                    }
+
                 }
                 
             }
+           
             
             VStack(){ //eventually make this a button that takes to a navigation so this looks better...maybe...low priority
-                if firstDriverWins != -1 && secondDriverWins != -1{
+                if firstDriverWins != -1 && secondDriverWins != -1 && firstDriverPts != -1 && secondDriverPts != -1{
                     
                     ViewThatFits{
                         Text("\(firstYear) \(firstName) V.S. \(secondYear) \(secondName)")
@@ -162,9 +236,9 @@ struct ContentView: View {
                     Spacer()
                     HStack{
                         Spacer()
-                        Text("Points:")
+                        Text("Points: \(String(format: "%g",firstDriverPts))")
                         Spacer()
-                        Text("Points:")
+                        Text("Points: \(String(format: "%g",secondDriverPts))")
                         Spacer()
                     }
                     Spacer()
@@ -183,6 +257,10 @@ struct ContentView: View {
                         Text("Pole Positions:")
                         Spacer()
                     }
+                }
+                else{
+                    Text("Waiting for data...")
+                        .font(.headline)
                 }
             }
             Spacer()
