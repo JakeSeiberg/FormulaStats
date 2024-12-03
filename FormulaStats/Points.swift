@@ -19,6 +19,7 @@ struct StandingsList: Decodable {
 
 struct DriverStanding: Decodable {
     let points: String
+    let position: String
 }
 
 func getPointsInSeason(season: String, driverID: String, completion: @escaping (Float?) -> Void) {
@@ -50,5 +51,37 @@ func getPointsInSeason(season: String, driverID: String, completion: @escaping (
         }
     }
 
+    task.resume()
+}
+
+//havent tested this yet...might work
+func getFinalPositionInSeason(season: String, driverID: String, completion: @escaping (Int?) -> Void) {
+    let urlString = "https://ergast.com/api/f1/\(season)/drivers/\(driverID)/driverStandings.json"
+    guard let url = URL(string: urlString) else {
+        completion(nil)
+        return
+    }
+    
+    let task = URLSession.shared.dataTask(with: url) { data, response, error in
+        guard let data = data, error == nil else {
+            completion(nil)
+            return
+        }
+        
+        do {
+            let standingsResponse = try JSONDecoder().decode(DriverStandingsResponse.self, from: data)
+            if let positionString = standingsResponse.MRData.StandingsTable.StandingsLists.first?.DriverStandings.first?.position,
+               let position = Int(positionString){
+                completion(position)
+            }
+            else{
+                completion(nil)
+            }
+        }
+        catch{
+            completion(nil)
+        }
+    }
+    
     task.resume()
 }

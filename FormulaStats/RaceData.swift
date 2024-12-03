@@ -83,6 +83,39 @@ func getRacesInSeason(season: String, driverId: String, completion: @escaping (I
     task.resume()
 }
 
+func getDriverPoles(season: String, driverId: String, completion: @escaping (Int?) -> Void) {
+    //define the url string with given parameters
+    
+    let urlString = "https://ergast.com/api/f1/\(season)/drivers/\(driverId)/results/grid/1.json"
+    guard let url = URL(string: urlString) else { //create url object
+        completion(nil)
+        return
+    }
+
+    let task = URLSession.shared.dataTask(with: url) { data, response, error in
+        guard let data = data, error == nil else { //confirm data pulled correctly
+            completion(nil)
+            return
+        }
+
+        do {
+            let decoder = JSONDecoder()
+            let result = try decoder.decode(DriverData.self, from: data)
+            if let totalWins = Int(result.MRData.total) {
+                completion(totalWins)
+            }
+            else{
+                
+                completion(nil)
+            }
+        }
+        catch{
+            completion(nil)
+        }
+    }
+    task.resume()
+}
+
 
 
     

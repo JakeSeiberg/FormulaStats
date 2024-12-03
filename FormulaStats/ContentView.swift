@@ -27,6 +27,9 @@ struct ContentView: View {
     
     @State private var firstDriverPts: Float = -1
     @State private var secondDriverPts: Float = -1
+    
+    @State private var firstDriverPos : Int = -1
+    @State private var secondDriverPos : Int = -1
   
     var body: some View {
         
@@ -115,7 +118,6 @@ struct ContentView: View {
             
             
                 
-            //need to ping twice for some reason. TODO: fix this bug
             if secondName != "" && firstName != "" {
                 
                 Button("Get Race Data") {
@@ -131,7 +133,7 @@ struct ContentView: View {
                     //this gives warning but still works, working on clearing it
                     var timer: Timer?
                     var count: Int = 0
-                                       
+                    //gets the two driverIDs
                     getDriverId(season: firstYear, givenName: driverOneF, familyName: driverOneL) { driverId in
                         if let driverId = driverId {
                             firstDriverID = driverId
@@ -146,6 +148,8 @@ struct ContentView: View {
                             print("Driver not found")
                         }
                     }
+                    
+                    //gets total number of races in season for both drivers
                     getRacesInSeason(season: secondYear, driverId: secondDriverID){ ttlRaces in
                         if let ttlRaces = ttlRaces{
                             secondRaces = ttlRaces
@@ -153,7 +157,6 @@ struct ContentView: View {
                             print("error fetching total races")
                         }
                     }
-                    
                     getRacesInSeason(season: firstYear, driverId: firstDriverID){ ttlRaces in
                         if let ttlRaces = ttlRaces{
                             firstRaces = ttlRaces
@@ -161,6 +164,7 @@ struct ContentView: View {
                             print("error fetching total races")
                         }
                     }
+                    
                     //first driver data
                     timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true){timer in
                         getDriverWins(season: firstYear, driverId: firstDriverID){ wins in
@@ -204,6 +208,24 @@ struct ContentView: View {
                                 print("Driver not found")
                             }
                         }
+                        //get final standings data for both drivers
+                        getFinalPositionInSeason(season: firstYear, driverID: firstDriverID){pos in
+                            if let pos = pos {
+                                firstDriverPos = pos
+                            }
+                            else{
+                                print("Driver not found")
+                            }
+                        }
+                        getFinalPositionInSeason(season: secondYear, driverID: secondDriverID){pos in
+                            if let pos = pos {
+                                secondDriverPos = pos
+                            }
+                            else{
+                                print("Driver not found")
+                            }
+                        }
+                        
                         if secondDriverWins != secondRaces || count > 4{
                             timer.invalidate()
                         }
@@ -244,9 +266,9 @@ struct ContentView: View {
                     Spacer()
                     HStack{
                         Spacer()
-                        Text("Drivers Standings:")
+                        Text("Drivers Standings: \(firstDriverPos)")
                         Spacer()
-                        Text("Drivers Standings:")
+                        Text("Drivers Standings: \(secondDriverPos)")
                         Spacer()
                     }
                     Spacer()
