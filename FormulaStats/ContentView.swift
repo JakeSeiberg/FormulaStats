@@ -13,6 +13,10 @@ struct ContentView: View {
     @State private var secondName = ""
     @State private var secondYear = ""
     
+    @State private var ttlRacesOne: Int = 0
+    @State private var ttlRacesTwo: Int = 0
+    
+    
     @FocusState private var focusYear1: Bool
     @FocusState private var focusYear2: Bool
     
@@ -30,7 +34,10 @@ struct ContentView: View {
     
     @State private var firstDriverPos : Int = -1
     @State private var secondDriverPos : Int = -1
-  
+    
+    @State private var firstDriverPoles: String = ""
+    @State private var secondDriverPoles: String = ""
+      
     var body: some View {
         
         VStack(spacing: 20) {
@@ -38,7 +45,6 @@ struct ContentView: View {
             VStack(alignment: .leading, spacing: 10) {
                 Text("   Input First Drivers Season and Name   ")
                     .font(.headline)
-                
                 HStack {
                     TextField("Year", text: $firstYear)
                         .keyboardType(.numberPad)
@@ -75,7 +81,6 @@ struct ContentView: View {
             .cornerRadius(8)
             
             Divider()
-            
             
             // Second Name and Year
             VStack(alignment: .leading, spacing: 10) {
@@ -117,7 +122,7 @@ struct ContentView: View {
             .cornerRadius(8)
             
             
-                
+            
             if secondName != "" && firstName != "" {
                 
                 Button("Get Race Data") {
@@ -126,9 +131,6 @@ struct ContentView: View {
                     
                     let driverTwoF = splitName(secondName).0
                     let driverTwoL = splitName(secondName).1
-                    
-                    var firstRaces = 0
-                    var secondRaces = 0
                     
                     //this gives warning but still works, working on clearing it
                     var timer: Timer?
@@ -152,14 +154,14 @@ struct ContentView: View {
                     //gets total number of races in season for both drivers
                     getRacesInSeason(season: secondYear, driverId: secondDriverID){ ttlRaces in
                         if let ttlRaces = ttlRaces{
-                            secondRaces = ttlRaces
+                            ttlRacesTwo = ttlRaces
                         }else{
                             print("error fetching total races")
                         }
                     }
                     getRacesInSeason(season: firstYear, driverId: firstDriverID){ ttlRaces in
                         if let ttlRaces = ttlRaces{
-                            firstRaces = ttlRaces
+                            ttlRacesOne = ttlRaces
                         }else{
                             print("error fetching total races")
                         }
@@ -181,7 +183,7 @@ struct ContentView: View {
                                 print("Driver not found")
                             }
                         }
-                        if firstDriverWins != firstRaces || count > 4{
+                        if firstDriverWins != ttlRacesOne || count > 4{
                             timer.invalidate()
                         }
                         else{
@@ -226,21 +228,57 @@ struct ContentView: View {
                             }
                         }
                         
-                        if secondDriverWins != secondRaces || count > 4{
+                        //get poles if year is 2003 and beyond
+                        let intFirstYear = Int(firstYear) ?? 0
+                        let intSecondYear = Int(secondYear) ?? 0
+                        
+                        if intFirstYear >= 2003{
+                            
+                            getDriverPoles(season: firstYear, driverId: firstDriverID){ poles in
+                                if let poles = poles {
+                                    firstDriverPoles = String(poles)
+                                }
+                                else{
+                                    print("Driver not found")
+                                }
+                            }
+                        }
+                        else{
+                            firstDriverPoles = "No pole data from before 2003"
+                        }
+                        if intSecondYear >= 2003{
+                            
+                            getDriverPoles(season: secondYear, driverId: secondDriverID){ poles in
+                                if let poles = poles {
+                                    secondDriverPoles = String(poles)
+                                }
+                                else{
+                                    print("Driver not found")
+                                }
+                            }
+                        }
+                        else{
+                            secondDriverPoles = "No pole data from before 2003"
+                        }
+                        
+                        if secondDriverWins != ttlRacesTwo || count > 4{
                             timer.invalidate()
                         }
                         else{
                             count += 1
                         }
                     }
-
+                    
                 }
                 
             }
-           
+            
             
             VStack(){ //eventually make this a button that takes to a navigation so this looks better...maybe...low priority
-                if firstDriverWins != -1 && secondDriverWins != -1 && firstDriverPts != -1 && secondDriverPts != -1{
+                if firstDriverWins != -1 && secondDriverWins != -1 && firstDriverPoles != "" && secondDriverPoles != "" && firstDriverPos != -1 && secondDriverPos != -1 && firstDriverPts != -1 && secondDriverPts != -1{
+                    let firstScore: Int = calcScore(wins: firstDriverWins, poles: firstDriverPoles, races: ttlRacesOne, pos: firstDriverPos, pts: firstDriverPts)
+                    
+                    let secondScore: Int = calcScore(wins: secondDriverWins, poles: secondDriverPoles, races: ttlRacesTwo, pos: secondDriverPos, pts: secondDriverPts)
                     
                     ViewThatFits{
                         Text("\(firstYear) \(firstName) V.S. \(secondYear) \(secondName)")
@@ -250,35 +288,141 @@ struct ContentView: View {
                     }
                     HStack{
                         Spacer()
-                        Text("Wins: \(firstDriverWins)")
-                        Spacer()
-                        Text("Wins: \(secondDriverWins)")
+                        if firstDriverWins > secondDriverWins{
+                            Text("Wins: \(firstDriverWins)")
+                                .foregroundColor(.green)
+                            Spacer()
+                            Text("Wins: \(secondDriverWins)")
+                                .foregroundColor(.red)
+                        }
+                        else if secondScore > firstScore{
+                            Text("Wins: \(firstDriverWins)")
+                                .foregroundColor(.red)
+                            Spacer()
+                            Text("Wins: \(secondDriverWins)")
+                                .foregroundColor(.green)
+                        }
+                        else{
+                            Text("Wins: \(firstDriverWins)")
+                                .foregroundColor(.yellow)
+                            Spacer()
+                            Text("Wins: \(secondDriverWins)")
+                                .foregroundColor(.yellow)
+                        }
                         Spacer()
                     }
                     Spacer()
                     HStack{
                         Spacer()
-                        Text("Points: \(String(format: "%g",firstDriverPts))")
-                        Spacer()
-                        Text("Points: \(String(format: "%g",secondDriverPts))")
+                        if firstDriverPts > secondDriverPts{
+                            Text("Points: \(String(format: "%g",firstDriverPts))")
+                                .foregroundColor(.green)
+                            Spacer()
+                            Text("Points: \(String(format: "%g",secondDriverPts))")
+                                .foregroundColor(.red)
+                        }
+                        else if secondDriverPts > firstDriverPts{
+                            Text("Points: \(String(format: "%g",firstDriverPts))")
+                                .foregroundColor(.red)
+                            Spacer()
+                            Text("Points: \(String(format: "%g",secondDriverPts))")
+                                .foregroundColor(.green)
+                        }
+                        else{
+                            Text("Points: \(String(format: "%g",firstDriverPts))")
+                                .foregroundColor(.yellow)
+                            Spacer()
+                            Text("Points: \(String(format: "%g",secondDriverPts))")
+                                .foregroundColor(.yellow)
+                        }
                         Spacer()
                     }
                     Spacer()
                     HStack{
                         Spacer()
-                        Text("Drivers Standings: \(firstDriverPos)")
-                        Spacer()
-                        Text("Drivers Standings: \(secondDriverPos)")
+                        if firstDriverPos < secondDriverPos{
+                            Text("Drivers Standings: \(firstDriverPos)")
+                                .foregroundColor(.green)
+                            Spacer()
+                            Text("Drivers Standings: \(secondDriverPos)")
+                                .foregroundColor(.red)
+                        }
+                        else if secondDriverPos < firstDriverPos{
+                            Text("Drivers Standings: \(firstDriverPos)")
+                                .foregroundColor(.red)
+                            Spacer()
+                            Text("Drivers Standings: \(secondDriverPos)")
+                                .foregroundColor(.green)
+                        }
+                        else{
+                            Text("Drivers Standings: \(firstDriverPos)")
+                                .foregroundColor(.yellow)
+                            Spacer()
+                            Text("Drivers Standings: \(secondDriverPos)")
+                                .foregroundColor(.yellow)
+                        }
                         Spacer()
                     }
                     Spacer()
                     HStack{
                         Spacer()
-                        Text("Pole Positions:")
-                        Spacer()
-                        Text("Pole Positions:")
+                        if firstDriverPoles == "No pole data from before 2003" || secondDriverPoles == "No pole data from before 2003"{
+                            Text("Pole Positions: \(firstDriverPoles)")
+                            Spacer()
+                            Text("Pole Positions: \(secondDriverPoles)")
+                            
+                        }
+                        else if Int(firstDriverPoles) ?? 0 > Int(secondDriverPoles) ?? 0{
+                            Text("Pole Positions: \(firstDriverPoles)")
+                                .foregroundColor(.green)
+                            Spacer()
+                            Text("Pole Positions: \(secondDriverPoles)")
+                                .foregroundColor(.red)
+                        }
+                        else if Int(firstDriverPoles) ?? 0 < Int(secondDriverPoles) ?? 0{
+                            Text("Pole Positions: \(firstDriverPoles)")
+                                .foregroundColor(.red)
+                            Spacer()
+                            Text("Pole Positions: \(secondDriverPoles)")
+                                .foregroundColor(.green)
+                        }
+                        else{
+                            Text("Pole Positions: \(firstDriverPoles)")
+                                .foregroundColor(.yellow)
+                            Spacer()
+                            Text("Pole Positions: \(secondDriverPoles)")
+                                .foregroundColor(.yellow)
+                        }
+                        
                         Spacer()
                     }
+                    Spacer()
+                    HStack{
+                        Spacer()
+                        if firstScore > secondScore{
+                            Text("ForumlaStats Score: \(firstScore)")
+                                .foregroundColor(.green)
+                            Spacer()
+                            Text("FormulaStats Score: \(secondScore)")
+                                .foregroundColor(.red)
+                        }
+                        else if secondScore > firstScore{
+                            Text("ForumlaStats Score: \(firstScore)")
+                                .foregroundColor(.red)
+                            Spacer()
+                            Text("FormulaStats Score: \(secondScore)")
+                                .foregroundColor(.green)
+                        }
+                        else{
+                            Text("ForumlaStats Score: \(firstScore)")
+                                .foregroundColor(.yellow)
+                            Spacer()
+                            Text("FormulaStats Score: \(secondScore)")
+                                .foregroundColor(.yellow)
+                        }
+                        Spacer()
+                    }
+                    Spacer()
                 }
                 else{
                     Text("Waiting for data...")
@@ -286,11 +430,32 @@ struct ContentView: View {
                 }
             }
             Spacer()
+            HStack{
+                Spacer()
+                Button("Reset"){
+                    firstName = ""
+                    secondName = ""
+                    firstYear = ""
+                    secondYear = ""
+                    firstDriverID = ""
+                    secondDriverID = ""
+                    firstDriverPos = -1
+                    secondDriverPos = -1
+                    firstDriverPoles = ""
+                    secondDriverPoles = ""
+                    firstDriverWins = -1
+                    secondDriverWins = -1
+                    ttlRacesOne = -1
+                    ttlRacesTwo = -1
+                    firstDriverList = []
+                    secondDriverList = []
+                }
+                Spacer()
+            }
         }
     }
-            
+    
 }
-
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {

@@ -8,12 +8,12 @@ import Foundation
 
 
 
-struct DriverData: Decodable { //struct to hold wins
+struct DriverData: Decodable { //struct to hold json data from API
     let MRData: MRData
 }
 
 
-struct MRData: Decodable { //struct to hold json data from API
+struct MRData: Decodable {//struct to hold specific total data
     let total: String
 }
 
@@ -69,7 +69,7 @@ func getRacesInSeason(season: String, driverId: String, completion: @escaping (I
             let decoder = JSONDecoder()
             let result = try decoder.decode(DriverData.self, from: data)
             if let ttlRaces = Int(result.MRData.total) {
-                completion(ttlRaces)
+                completion((ttlRaces/20)-1)
             }
             else{
                 
@@ -86,7 +86,7 @@ func getRacesInSeason(season: String, driverId: String, completion: @escaping (I
 func getDriverPoles(season: String, driverId: String, completion: @escaping (Int?) -> Void) {
     //define the url string with given parameters
     
-    let urlString = "https://ergast.com/api/f1/\(season)/drivers/\(driverId)/results/grid/1.json"
+    let urlString = "https://ergast.com/api/f1/\(season)/drivers/\(driverId)/qualifying/1.json"
     guard let url = URL(string: urlString) else { //create url object
         completion(nil)
         return
@@ -101,8 +101,8 @@ func getDriverPoles(season: String, driverId: String, completion: @escaping (Int
         do {
             let decoder = JSONDecoder()
             let result = try decoder.decode(DriverData.self, from: data)
-            if let totalWins = Int(result.MRData.total) {
-                completion(totalWins)
+            if let totalPole = Int(result.MRData.total) {
+                completion(totalPole)
             }
             else{
                 
