@@ -8,6 +8,32 @@
 import SwiftUI
 
 struct ContentView: View {
+    var body : some View {
+        NavigationStack() {
+            VStack{
+                Text("Welcome to FormulaStats!")
+                    .font(.title)
+                    .bold()
+                    .padding()
+                NavigationLink(destination: CompareScreen()) {
+                    Text("Compare Drivers")
+                        .font(.title)
+                }
+                .padding()
+                Text("Or")
+                    .padding()
+                NavigationLink(destination: GameScreen()){
+                    Text("Play the FormulaStats Game")
+                        .font(.title)
+                }
+                
+            }
+        }
+    }
+    
+}
+
+struct CompareScreen: View {
     @State private var firstName = ""
     @State private var firstYear = ""
     @State private var secondName = ""
@@ -15,7 +41,6 @@ struct ContentView: View {
     
     @State private var ttlRacesOne: Int = 0
     @State private var ttlRacesTwo: Int = 0
-    
     
     @FocusState private var focusYear1: Bool
     @FocusState private var focusYear2: Bool
@@ -454,7 +479,226 @@ struct ContentView: View {
             }
         }
     }
+}
+
+struct GameScreen: View{
+    @State private var firstName = ""
+    @State private var firstYear = ""
+    @State private var secondName = ""
+    @State private var secondYear = ""
     
+    @State private var ttlRacesOne: Int = 0
+    @State private var ttlRacesTwo: Int = 0
+    
+    @FocusState private var focusYear1: Bool
+    @FocusState private var focusYear2: Bool
+    
+    @State private var firstDriverID: String = ""
+    @State private var secondDriverID: String = ""
+    
+    @State private var firstDriverList: [String] = []
+    @State private var secondDriverList: [String] = []
+    
+    @State private var firstDriverWins: Int = -1
+    @State private var secondDriverWins: Int = -1
+    
+    @State private var firstDriverPts: Float = -1
+    @State private var secondDriverPts: Float = -1
+    
+    @State private var firstDriverPos : Int = -1
+    @State private var secondDriverPos : Int = -1
+    
+    @State private var firstDriverPoles: String = ""
+    @State private var secondDriverPoles: String = ""
+    
+    var body: some View{
+        VStack{
+            Button("Generate Two Drivers"){
+                let yearOne = Int.random(in: 2003...2023)
+                let yearTwo = Int.random(in: 2003...2023)
+                firstYear = String(yearOne)
+                secondYear = String(yearTwo)
+                
+                getDriversList(season: firstYear) { drivers in
+                    if let drivers = drivers {
+                        firstDriverList = drivers
+                    } else {
+                        print("Failed to fetch drivers")
+                    }
+                }
+                
+                getDriversList(season: secondYear) { drivers in
+                    if let drivers = drivers {
+                        secondDriverList = drivers
+                    } else {
+                        print("Failed to fetch drivers")
+                    }
+                }
+                
+                firstName = firstDriverList.randomElement() ?? ""
+                secondName = secondDriverList.randomElement() ?? ""
+                if firstName != "" && secondName != "" {
+                    let driverOneF = splitName(firstName).0
+                    let driverOneL = splitName(firstName).1
+                    
+                    let driverTwoF = splitName(secondName).0
+                    let driverTwoL = splitName(secondName).1
+                    
+                    //this gives warning but still works, working on clearing it
+                    var timer: Timer?
+                    var count: Int = 0
+                    //gets the two driverIDs
+                    getDriverId(season: firstYear, givenName: driverOneF, familyName: driverOneL) { driverId in
+                        if let driverId = driverId {
+                            firstDriverID = driverId
+                        } else {
+                            print("Driver not found")
+                        }
+                    }
+                    getDriverId(season: secondYear, givenName: driverTwoF, familyName: driverTwoL) { driverId in
+                        if let driverId = driverId {
+                            secondDriverID = driverId
+                        } else {
+                            print("Driver not found")
+                        }
+                    }
+                    
+                    //gets total number of races in season for both drivers
+                    getRacesInSeason(season: secondYear, driverId: secondDriverID){ ttlRaces in
+                        if let ttlRaces = ttlRaces{
+                            ttlRacesTwo = ttlRaces
+                        }else{
+                            print("error fetching total races")
+                        }
+                    }
+                    getRacesInSeason(season: firstYear, driverId: firstDriverID){ ttlRaces in
+                        if let ttlRaces = ttlRaces{
+                            ttlRacesOne = ttlRaces
+                        }else{
+                            print("error fetching total races")
+                        }
+                    }
+                    
+                    //first driver data
+                    timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true){timer in
+                        getDriverWins(season: firstYear, driverId: firstDriverID){ wins in
+                            if let wins = wins {
+                                firstDriverWins = wins
+                            } else {
+                                print("Driver not found")
+                            }
+                        }
+                        getPointsInSeason(season: firstYear, driverID: firstDriverID){ pts in
+                            if let pts = pts {
+                                firstDriverPts = pts
+                            } else {
+                                print("Driver not found")
+                            }
+                        }
+                        if firstDriverWins != ttlRacesOne || count > 4{
+                            timer.invalidate()
+                        }
+                        else{
+                            count += 1
+                        }
+                    }
+                    
+                    count = 0
+                    
+                    //second driver data
+                    timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true){timer in
+                        getDriverWins(season: secondYear, driverId: secondDriverID){ wins in
+                            if let wins = wins {
+                                secondDriverWins = wins
+                            } else {
+                                print("Driver not found")
+                            }
+                        }
+                        getPointsInSeason(season: secondYear, driverID: secondDriverID){ pts in
+                            if let pts = pts {
+                                secondDriverPts = pts
+                            }
+                            else{
+                                print("Driver not found")
+                            }
+                        }
+                        //get final standings data for both drivers
+                        getFinalPositionInSeason(season: firstYear, driverID: firstDriverID){pos in
+                            if let pos = pos {
+                                firstDriverPos = pos
+                            }
+                            else{
+                                print("Driver not found")
+                            }
+                        }
+                        getFinalPositionInSeason(season: secondYear, driverID: secondDriverID){pos in
+                            if let pos = pos {
+                                secondDriverPos = pos
+                            }
+                            else{
+                                print("Driver not found")
+                            }
+                        }
+                        
+                        //get poles if year is 2003 and beyond
+                        let intFirstYear = Int(firstYear) ?? 0
+                        let intSecondYear = Int(secondYear) ?? 0
+                        
+                        if intFirstYear >= 2003{
+                            
+                            getDriverPoles(season: firstYear, driverId: firstDriverID){ poles in
+                                if let poles = poles {
+                                    firstDriverPoles = String(poles)
+                                }
+                                else{
+                                    print("Driver not found")
+                                }
+                            }
+                        }
+                        else{
+                            firstDriverPoles = "No pole data from before 2003"
+                        }
+                        if intSecondYear >= 2003{
+                            
+                            getDriverPoles(season: secondYear, driverId: secondDriverID){ poles in
+                                if let poles = poles {
+                                    secondDriverPoles = String(poles)
+                                }
+                                else{
+                                    print("Driver not found")
+                                }
+                            }
+                        }
+                        else{
+                            secondDriverPoles = "No pole data from before 2003"
+                        }
+                        
+                        if secondDriverWins != ttlRacesTwo || count > 4{
+                            timer.invalidate()
+                        }
+                        else{
+                            count += 1
+                        }
+                    }
+                }
+            }
+            .font(.title)
+            Spacer()
+            if firstDriverWins == -1 || secondDriverWins == -1{
+                Text("Waiting for data...")
+            }
+            else{
+                //add a way to go 1 by 1 down the list of stats and
+                //have user guess higher or lower for each one
+            }
+            Spacer()
+            
+            
+        }
+        
+        
+       
+    }
 }
 
 struct ContentView_Previews: PreviewProvider {
@@ -462,3 +706,4 @@ struct ContentView_Previews: PreviewProvider {
         ContentView()
     }
 }
+
