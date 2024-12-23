@@ -30,7 +30,7 @@ struct ErgastResponse: Decodable {
 }
 
 func getDriversList(season: String, completion: @escaping ([String]?) -> Void) {
-    let urlString = "https://ergast.com/api/f1/\(season)/drivers.json"
+    let urlString = "https://api.jolpi.ca/ergast/f1/\(season)/drivers.json"
     guard let url = URL(string: urlString) else {
         completion(nil)
         return
@@ -55,7 +55,7 @@ func getDriversList(season: String, completion: @escaping ([String]?) -> Void) {
 }
 
 func getDriverId(season: String, givenName: String, familyName: String, completion: @escaping (String?) -> Void) {
-    let urlString = "https://ergast.com/api/f1/\(season)/drivers.json"
+    let urlString = "https://api.jolpi.ca/ergast/f1/\(season)/drivers.json"
     guard let url = URL(string: urlString) else {
         completion(nil)
         return

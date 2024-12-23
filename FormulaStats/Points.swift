@@ -23,7 +23,7 @@ struct DriverStanding: Decodable {
 }
 
 func getPointsInSeason(season: String, driverID: String, completion: @escaping (Float?) -> Void) {
-    let urlString = "https://ergast.com/api/f1/\(season)/drivers/\(driverID)/driverStandings.json"
+    let urlString = "https://api.jolpi.ca/ergast/f1/\(season)/drivers/\(driverID)/driverStandings.json"
     guard let url = URL(string: urlString) else {
         completion(nil)
         return
@@ -56,7 +56,7 @@ func getPointsInSeason(season: String, driverID: String, completion: @escaping (
 
 //havent tested this yet...might work
 func getFinalPositionInSeason(season: String, driverID: String, completion: @escaping (Int?) -> Void) {
-    let urlString = "https://ergast.com/api/f1/\(season)/drivers/\(driverID)/driverStandings.json"
+    let urlString = "https://api.jolpi.ca/ergast/f1/\(season)/drivers/\(driverID)/driverStandings.json"
     guard let url = URL(string: urlString) else {
         completion(nil)
         return

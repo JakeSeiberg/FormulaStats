@@ -21,7 +21,7 @@ struct MRData: Decodable {//struct to hold specific total data
 func getDriverWins(season: String, driverId: String, completion: @escaping (Int?) -> Void) {
     //define the url string with given parameters
     
-    let urlString = "https://ergast.com/api/f1/\(season)/drivers/\(driverId)/results/1.json"
+    let urlString = "https://api.jolpi.ca/ergast/f1/\(season)/drivers/\(driverId)/results/1.json"
     guard let url = URL(string: urlString) else { //create url object
         completion(nil)
         return
@@ -53,7 +53,7 @@ func getDriverWins(season: String, driverId: String, completion: @escaping (Int?
 
 func getRacesInSeason(season: String, driverId: String, completion: @escaping (Int?) -> Void) {
     //define the url string with given parameters
-    let urlString = "https://ergast.com/api/f1/\(season)/drivers/\(driverId)/results.json"
+    let urlString = "https://api.jolpi.ca/ergast/f1/\(season)/drivers/\(driverId)/results.json"
     guard let url = URL(string: urlString) else { //create url object
         completion(nil)
         return
@@ -86,7 +86,7 @@ func getRacesInSeason(season: String, driverId: String, completion: @escaping (I
 func getDriverPoles(season: String, driverId: String, completion: @escaping (Int?) -> Void) {
     //define the url string with given parameters
     
-    let urlString = "https://ergast.com/api/f1/\(season)/drivers/\(driverId)/qualifying/1.json"
+    let urlString = "https://api.jolpi.ca/ergast/f1/\(season)/drivers/\(driverId)/qualifying/1.json"
     guard let url = URL(string: urlString) else { //create url object
         completion(nil)
         return
