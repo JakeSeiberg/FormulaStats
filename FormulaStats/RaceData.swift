@@ -69,7 +69,7 @@ func getRacesInSeason(season: String, driverId: String, completion: @escaping (I
             let decoder = JSONDecoder()
             let result = try decoder.decode(DriverData.self, from: data)
             if let ttlRaces = Int(result.MRData.total) {
-                completion((ttlRaces/20)-1)
+                completion(ttlRaces)
             }
             else{
                 
