@@ -64,280 +64,239 @@ struct CompareScreen: View {
     @State private var secondDriverPoles: String = ""
     
     @State private var isLoading: Bool = false
+    @State private var showingResults: Bool = false
       
     var body: some View {
-        
         VStack(spacing: 20) {
-            // First Name and Year
-            VStack(alignment: .leading, spacing: 10) {
-                Text("   Input First Drivers Season and Name   ")
-                    .font(.headline)
-                HStack {
-                    TextField("Year", text: $firstYear)
-                        .keyboardType(.numberPad)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .frame(width: 80)
-                        .focused($focusYear1)
-                    Button("Get Drivers") {
-                        focusYear1 = false
-                        focusYear2 = false
-                        Task {
-                            firstDriverList = await getDriversListAsync(season: firstYear) ?? []
-                        }
-                    }
-                    if firstDriverList.isEmpty {
-                        Text("Loading...")
-                    }
-                    else{
-                        Picker(selection: $firstName, label: Text("Pick")) {
-                            
-                            ForEach(firstDriverList, id: \.self) { driver in
-                                Text(driver)
+            if !showingResults {
+                // First Name and Year
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("   Input First Drivers Season and Name   ")
+                        .font(.headline)
+                    HStack {
+                        TextField("Year", text: $firstYear)
+                            .keyboardType(.numberPad)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                            .frame(width: 80)
+                            .focused($focusYear1)
+                        Button("Get Drivers") {
+                            focusYear1 = false
+                            focusYear2 = false
+                            Task {
+                                firstDriverList = await getDriversListAsync(season: firstYear) ?? []
                             }
                         }
-                    }
-                }
-                
-            }
-            .padding()
-            .background(Color(.systemGray6))
-            .cornerRadius(8)
-            
-            Divider()
-            
-            // Second Name and Year
-            VStack(alignment: .leading, spacing: 10) {
-                Text("Input Second Drivers Season and Name")
-                    .font(.headline)
-                
-                HStack {
-                    TextField("Year", text: $secondYear)
-                        .keyboardType(.numberPad)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .frame(width: 80)
-                        .focused($focusYear2)
-                    Button("Get Drivers") {
-                        focusYear1 = false
-                        focusYear2 = false
-                        Task {
-                            secondDriverList = await getDriversListAsync(season: secondYear) ?? []
+                        if firstDriverList.isEmpty {
+                            Text("Loading...")
                         }
-                    }
-                    if secondDriverList.isEmpty {
-                        Text("Loading...")
-                    }
-                    else{
-                        Picker(selection: $secondName, label: Text("Pick")) {
-                            ForEach(secondDriverList, id: \.self) { driver in
-                                Text(driver)
+                        else{
+                            Picker(selection: $firstName, label: Text("Pick")) {
+                                
+                                ForEach(firstDriverList, id: \.self) { driver in
+                                    Text(driver)
+                                }
                             }
                         }
                     }
                     
                 }
-            }
-            .padding()
-            .background(Color(.systemGray6))
-            .cornerRadius(8)
-            
-            
-            
-            if secondName != "" && firstName != "" {
+                .padding()
+                .background(Color(.systemGray6))
+                .cornerRadius(8)
                 
-                Button("Get Race Data") {
-                    Task {
-                        await fetchAllDriverData()
-                    }
-                }
-                .disabled(isLoading)
+                Divider()
                 
-            }
-            
-            
-            VStack(){
-                if isLoading {
-                    ProgressView("Loading data...")
-                        .padding()
-                } else if firstDriverWins != -1 && secondDriverWins != -1 && firstDriverPoles != "" && secondDriverPoles != "" && firstDriverPos != -1 && secondDriverPos != -1 && firstDriverPts != -1 && secondDriverPts != -1{
-                    let firstScore: Int = calcScore(wins: firstDriverWins, poles: firstDriverPoles, races: ttlRacesOne, pos: firstDriverPos, pts: firstDriverPts)
+                // Second Name and Year
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Input Second Drivers Season and Name")
+                        .font(.headline)
                     
-                    let secondScore: Int = calcScore(wins: secondDriverWins, poles: secondDriverPoles, races: ttlRacesTwo, pos: secondDriverPos, pts: secondDriverPts)
-                    
-                    ViewThatFits{
-                        Text("\(firstYear) \(firstName) V.S. \(secondYear) \(secondName)")
-                            .font(.subheadline)
-                            .lineLimit(1)
-                            .padding()
-                    }
-                    HStack{
-                        Spacer()
-                        if firstDriverWins > secondDriverWins{
-                            Text("Wins: \(firstDriverWins)")
-                                .foregroundColor(.green)
-                            Spacer()
-                            Text("Wins: \(secondDriverWins)")
-                                .foregroundColor(.red)
+                    HStack {
+                        TextField("Year", text: $secondYear)
+                            .keyboardType(.numberPad)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                            .frame(width: 80)
+                            .focused($focusYear2)
+                        Button("Get Drivers") {
+                            focusYear1 = false
+                            focusYear2 = false
+                            Task {
+                                secondDriverList = await getDriversListAsync(season: secondYear) ?? []
+                            }
                         }
-                        else if secondDriverWins > firstDriverWins{
-                            Text("Wins: \(firstDriverWins)")
-                                .foregroundColor(.red)
-                            Spacer()
-                            Text("Wins: \(secondDriverWins)")
-                                .foregroundColor(.green)
+                        if secondDriverList.isEmpty {
+                            Text("Loading...")
                         }
                         else{
-                            Text("Wins: \(firstDriverWins)")
-                                .foregroundColor(.yellow)
-                            Spacer()
-                            Text("Wins: \(secondDriverWins)")
-                                .foregroundColor(.yellow)
-                        }
-                        Spacer()
-                    }
-                    Spacer()
-                    HStack{
-                        Spacer()
-                        if firstDriverPts > secondDriverPts{
-                            Text("Points: \(String(format: "%g",firstDriverPts))")
-                                .foregroundColor(.green)
-                            Spacer()
-                            Text("Points: \(String(format: "%g",secondDriverPts))")
-                                .foregroundColor(.red)
-                        }
-                        else if secondDriverPts > firstDriverPts{
-                            Text("Points: \(String(format: "%g",firstDriverPts))")
-                                .foregroundColor(.red)
-                            Spacer()
-                            Text("Points: \(String(format: "%g",secondDriverPts))")
-                                .foregroundColor(.green)
-                        }
-                        else{
-                            Text("Points: \(String(format: "%g",firstDriverPts))")
-                                .foregroundColor(.yellow)
-                            Spacer()
-                            Text("Points: \(String(format: "%g",secondDriverPts))")
-                                .foregroundColor(.yellow)
-                        }
-                        Spacer()
-                    }
-                    Spacer()
-                    HStack{
-                        Spacer()
-                        if firstDriverPos < secondDriverPos{
-                            Text("Drivers Standings: \(firstDriverPos)")
-                                .foregroundColor(.green)
-                            Spacer()
-                            Text("Drivers Standings: \(secondDriverPos)")
-                                .foregroundColor(.red)
-                        }
-                        else if secondDriverPos < firstDriverPos{
-                            Text("Drivers Standings: \(firstDriverPos)")
-                                .foregroundColor(.red)
-                            Spacer()
-                            Text("Drivers Standings: \(secondDriverPos)")
-                                .foregroundColor(.green)
-                        }
-                        else{
-                            Text("Drivers Standings: \(firstDriverPos)")
-                                .foregroundColor(.yellow)
-                            Spacer()
-                            Text("Drivers Standings: \(secondDriverPos)")
-                                .foregroundColor(.yellow)
-                        }
-                        Spacer()
-                    }
-                    Spacer()
-                    HStack{
-                        Spacer()
-                        if firstDriverPoles == "No pole data from before 2003" || secondDriverPoles == "No pole data from before 2003"{
-                            Text("Pole Positions: \(firstDriverPoles)")
-                            Spacer()
-                            Text("Pole Positions: \(secondDriverPoles)")
-                            
-                        }
-                        else if Int(firstDriverPoles) ?? 0 > Int(secondDriverPoles) ?? 0{
-                            Text("Pole Positions: \(firstDriverPoles)")
-                                .foregroundColor(.green)
-                            Spacer()
-                            Text("Pole Positions: \(secondDriverPoles)")
-                                .foregroundColor(.red)
-                        }
-                        else if Int(firstDriverPoles) ?? 0 < Int(secondDriverPoles) ?? 0{
-                            Text("Pole Positions: \(firstDriverPoles)")
-                                .foregroundColor(.red)
-                            Spacer()
-                            Text("Pole Positions: \(secondDriverPoles)")
-                                .foregroundColor(.green)
-                        }
-                        else{
-                            Text("Pole Positions: \(firstDriverPoles)")
-                                .foregroundColor(.yellow)
-                            Spacer()
-                            Text("Pole Positions: \(secondDriverPoles)")
-                                .foregroundColor(.yellow)
+                            Picker(selection: $secondName, label: Text("Pick")) {
+                                ForEach(secondDriverList, id: \.self) { driver in
+                                    Text(driver)
+                                }
+                            }
                         }
                         
-                        Spacer()
                     }
-                    Spacer()
-                    HStack{
-                        Spacer()
-                        if firstScore > secondScore{
-                            Text("ForumlaStats Score: \(firstScore)")
-                                .foregroundColor(.green)
-                            Spacer()
-                            Text("FormulaStats Score: \(secondScore)")
-                                .foregroundColor(.red)
+                }
+                .padding()
+                .background(Color(.systemGray6))
+                .cornerRadius(8)
+                
+                if secondName != "" && firstName != "" {
+                    Button("Get Race Data") {
+                        Task {
+                            await fetchAllDriverData()
+                            showingResults = true
                         }
-                        else if secondScore > firstScore{
-                            Text("ForumlaStats Score: \(firstScore)")
-                                .foregroundColor(.red)
-                            Spacer()
-                            Text("FormulaStats Score: \(secondScore)")
-                                .foregroundColor(.green)
-                        }
-                        else{
-                            Text("ForumlaStats Score: \(firstScore)")
-                                .foregroundColor(.yellow)
-                            Spacer()
-                            Text("FormulaStats Score: \(secondScore)")
-                                .foregroundColor(.yellow)
-                        }
-                        Spacer()
                     }
+                    .disabled(isLoading)
+                }
+                
+                Spacer()
+            } else {
+                if isLoading {
                     Spacer()
+                    ProgressView("Loading data...")
+                        .padding()
+                    Spacer()
+                } else if firstDriverWins != -1 && secondDriverWins != -1 && firstDriverPoles != "" && secondDriverPoles != "" && firstDriverPos != -1 && secondDriverPos != -1 && firstDriverPts != -1 && secondDriverPts != -1{
+                    let firstScore: Int = calcScore(wins: firstDriverWins, poles: firstDriverPoles, races: ttlRacesOne, pos: firstDriverPos, pts: firstDriverPts)
+                    let secondScore: Int = calcScore(wins: secondDriverWins, poles: secondDriverPoles, races: ttlRacesTwo, pos: secondDriverPos, pts: secondDriverPts)
+                    
+                    ScrollView {
+                        VStack(spacing: 16) {
+                            // Header
+                            Text("Season Comparison")
+                                .font(.title2)
+                                .bold()
+                                .padding(.top)
+                            
+                            // Driver Names and Years
+                            HStack(spacing: 20) {
+                                VStack {
+                                    Text(firstName)
+                                        .font(.headline)
+                                        .multilineTextAlignment(.center)
+                                    Text(firstYear)
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                }
+                                .frame(maxWidth: .infinity)
+                                
+                                Text("VS")
+                                    .font(.title3)
+                                    .foregroundColor(.secondary)
+                                
+                                VStack {
+                                    Text(secondName)
+                                        .font(.headline)
+                                        .multilineTextAlignment(.center)
+                                    Text(secondYear)
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                }
+                                .frame(maxWidth: .infinity)
+                            }
+                            .padding()
+                            .background(Color(.systemGray6))
+                            .cornerRadius(12)
+                            
+                            // Statistics Grid
+                            VStack(spacing: 12) {
+                                StatRow(
+                                    label: "Wins",
+                                    firstValue: "\(firstDriverWins)",
+                                    secondValue: "\(secondDriverWins)",
+                                    firstWins: firstDriverWins > secondDriverWins,
+                                    secondWins: secondDriverWins > firstDriverWins
+                                )
+                                
+                                StatRow(
+                                    label: "Points",
+                                    firstValue: String(format: "%g", firstDriverPts),
+                                    secondValue: String(format: "%g", secondDriverPts),
+                                    firstWins: firstDriverPts > secondDriverPts,
+                                    secondWins: secondDriverPts > firstDriverPts
+                                )
+                                
+                                StatRow(
+                                    label: "Championship Position",
+                                    firstValue: "\(firstDriverPos)",
+                                    secondValue: "\(secondDriverPos)",
+                                    firstWins: firstDriverPos < secondDriverPos,
+                                    secondWins: secondDriverPos < firstDriverPos
+                                )
+                                
+                                if firstDriverPoles == "No pole data from before 2003" || secondDriverPoles == "No pole data from before 2003" {
+                                    StatRow(
+                                        label: "Pole Positions",
+                                        firstValue: firstDriverPoles,
+                                        secondValue: secondDriverPoles,
+                                        firstWins: false,
+                                        secondWins: false,
+                                        showColors: false
+                                    )
+                                } else {
+                                    StatRow(
+                                        label: "Pole Positions",
+                                        firstValue: firstDriverPoles,
+                                        secondValue: secondDriverPoles,
+                                        firstWins: (Int(firstDriverPoles) ?? 0) > (Int(secondDriverPoles) ?? 0),
+                                        secondWins: (Int(secondDriverPoles) ?? 0) > (Int(firstDriverPoles) ?? 0)
+                                    )
+                                }
+                                
+                                StatRow(
+                                    label: "FormulaStats Score",
+                                    firstValue: "\(firstScore)",
+                                    secondValue: "\(secondScore)",
+                                    firstWins: firstScore > secondScore,
+                                    secondWins: secondScore > firstScore
+                                )
+                            }
+                            .padding(.horizontal)
+                            
+                            // Reset Button
+                            Button(action: {
+                                showingResults = false
+                                firstName = ""
+                                secondName = ""
+                                firstYear = ""
+                                secondYear = ""
+                                firstDriverID = ""
+                                secondDriverID = ""
+                                firstDriverPos = -1
+                                secondDriverPos = -1
+                                firstDriverPoles = ""
+                                secondDriverPoles = ""
+                                firstDriverWins = -1
+                                secondDriverWins = -1
+                                firstDriverPts = -1
+                                secondDriverPts = -1
+                                ttlRacesOne = 0
+                                ttlRacesTwo = 0
+                                firstDriverList = []
+                                secondDriverList = []
+                            }) {
+                                Text("New Comparison")
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                                    .background(Color.blue)
+                                    .cornerRadius(12)
+                            }
+                            .padding(.horizontal)
+                            .padding(.bottom)
+                        }
+                    }
                 }
-            }
-            Spacer()
-            HStack{
-                Spacer()
-                Button("Reset"){
-                    firstName = ""
-                    secondName = ""
-                    firstYear = ""
-                    secondYear = ""
-                    firstDriverID = ""
-                    secondDriverID = ""
-                    firstDriverPos = -1
-                    secondDriverPos = -1
-                    firstDriverPoles = ""
-                    secondDriverPoles = ""
-                    firstDriverWins = -1
-                    secondDriverWins = -1
-                    firstDriverPts = -1
-                    secondDriverPts = -1
-                    ttlRacesOne = 0
-                    ttlRacesTwo = 0
-                    firstDriverList = []
-                    secondDriverList = []
-                }
-                Spacer()
             }
         }
+        .padding()
     }
     
     // New async function to fetch all driver data sequentially
-    private func fetchAllDriverData() async {
+    func fetchAllDriverData() async {
         isLoading = true
         
         // Reset all data
@@ -482,6 +441,7 @@ func getDriverPolesAsync(season: String, driverId: String) async -> Int? {
     }
 }
 
+// MARK: - GameScreen
 struct GameScreen: View{
     @State private var firstName = ""
     @State private var firstYear = ""
@@ -693,17 +653,65 @@ struct GameScreen: View{
                 //have user guess higher or lower for each one
             }
             Spacer()
-            
-            
         }
-        
-        
-       
     }
 }
 
+// MARK: - ContentView Previews
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         ContentView()
+    }
+}
+
+// MARK: - StatRow Component
+struct StatRow: View {
+    let label: String
+    let firstValue: String
+    let secondValue: String
+    let firstWins: Bool
+    let secondWins: Bool
+    var showColors: Bool = true
+    
+    var body: some View {
+        VStack(spacing: 4) {
+            Text(label)
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .frame(maxWidth: .infinity, alignment: .center)
+            
+            HStack(spacing: 12) {
+                // First driver column
+                Text(firstValue)
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                    .foregroundColor(showColors ? (firstWins ? .green : (secondWins ? .red : .orange)) : .primary)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color(.systemGray6))
+                    )
+                
+                // VS divider
+                Text("vs")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .frame(width: 30)
+                
+                // Second driver column
+                Text(secondValue)
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                    .foregroundColor(showColors ? (secondWins ? .green : (firstWins ? .red : .orange)) : .primary)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color(.systemGray6))
+                    )
+            }
+        }
+        .padding(.vertical, 4)
     }
 }
