@@ -158,9 +158,14 @@ struct CompareScreen: View {
                     ProgressView("Loading data...")
                         .padding()
                     Spacer()
-                } else if firstDriverWins != -1 && secondDriverWins != -1 && firstDriverPoles != "" && secondDriverPoles != "" && firstDriverPos != -1 && secondDriverPos != -1 && firstDriverPts != -1 && secondDriverPts != -1{
-                    let firstScore: Int = calcScore(wins: firstDriverWins, poles: firstDriverPoles, races: ttlRacesOne, pos: firstDriverPos, pts: firstDriverPts)
-                    let secondScore: Int = calcScore(wins: secondDriverWins, poles: secondDriverPoles, races: ttlRacesTwo, pos: secondDriverPos, pts: secondDriverPts)
+                } else if firstDriverWins != -1 && secondDriverWins != -1 &&
+                            firstDriverPoles != "" && secondDriverPoles != "" &&
+                            firstDriverPos != -1 && secondDriverPos != -1 &&
+                            firstDriverPts != -1 && secondDriverPts != -1 &&
+                            !firstName.isEmpty && !secondName.isEmpty { // Add this check
+                      
+                      let firstScore: Int = calcScore(wins: firstDriverWins, poles: firstDriverPoles, races: ttlRacesOne, pos: firstDriverPos, pts: firstDriverPts)
+                      let secondScore: Int = calcScore(wins: secondDriverWins, poles: secondDriverPoles, races: ttlRacesTwo, pos: secondDriverPos, pts: secondDriverPts)
                     
                     ScrollView {
                         VStack(spacing: 16) {
@@ -226,6 +231,7 @@ struct CompareScreen: View {
                                     secondWins: secondDriverPos < firstDriverPos
                                 )
                                 
+                                // Fix the poles section - add explicit ID
                                 if firstDriverPoles == "No pole data from before 2003" || secondDriverPoles == "No pole data from before 2003" {
                                     StatRow(
                                         label: "Pole Positions",
@@ -235,6 +241,7 @@ struct CompareScreen: View {
                                         secondWins: false,
                                         showColors: false
                                     )
+                                    .id("poles-no-data") // Add explicit ID
                                 } else {
                                     StatRow(
                                         label: "Pole Positions",
@@ -243,6 +250,7 @@ struct CompareScreen: View {
                                         firstWins: (Int(firstDriverPoles) ?? 0) > (Int(secondDriverPoles) ?? 0),
                                         secondWins: (Int(secondDriverPoles) ?? 0) > (Int(firstDriverPoles) ?? 0)
                                     )
+                                    .id("poles-with-data") // Add explicit ID
                                 }
                                 
                                 StatRow(
@@ -295,7 +303,6 @@ struct CompareScreen: View {
         .padding()
     }
     
-    // New async function to fetch all driver data sequentially
     func fetchAllDriverData() async {
         isLoading = true
         
@@ -341,8 +348,8 @@ struct CompareScreen: View {
         async let pos2 = getFinalPositionInSeasonAsync(season: secondYear, driverID: driverId2)
         
         // Wait for all to complete
-        ttlRacesOne = await races1 ?? 0
-        ttlRacesTwo = await races2 ?? 0
+        let fetchedRaces1 = await races1 ?? 0
+        let fetchedRaces2 = await races2 ?? 0
         firstDriverWins = await wins1 ?? 0
         secondDriverWins = await wins2 ?? 0
         firstDriverPts = await pts1 ?? 0
@@ -350,14 +357,26 @@ struct CompareScreen: View {
         firstDriverPos = await pos1 ?? 0
         secondDriverPos = await pos2 ?? 0
         
-        print("Fetched basic data - First: wins=\(firstDriverWins), pts=\(firstDriverPts), pos=\(firstDriverPos)")
-        print("Fetched basic data - Second: wins=\(secondDriverWins), pts=\(secondDriverPts), pos=\(secondDriverPos)")
+        // Validate and estimate races if needed
+        let year1Int = Int(firstYear) ?? 2020
+        let year2Int = Int(secondYear) ?? 2020
+        
+        ttlRacesOne = fetchedRaces1 > 0 ? fetchedRaces1 : estimateRacesForYear(year1Int)
+        ttlRacesTwo = fetchedRaces2 > 0 ? fetchedRaces2 : estimateRacesForYear(year2Int)
+        
+        print("Fetched basic data - First: wins=\(firstDriverWins), pts=\(firstDriverPts), pos=\(firstDriverPos), races=\(ttlRacesOne)")
+        print("Fetched basic data - Second: wins=\(secondDriverWins), pts=\(secondDriverPts), pos=\(secondDriverPos), races=\(ttlRacesTwo)")
+        
+        // Validate that we got reasonable data
+        if firstDriverPos == 0 || firstDriverPts == 0 {
+            print("Warning: Driver 1 has suspicious data (pos=\(firstDriverPos), pts=\(firstDriverPts))")
+        }
+        if secondDriverPos == 0 || secondDriverPts == 0 {
+            print("Warning: Driver 2 has suspicious data (pos=\(secondDriverPos), pts=\(secondDriverPts))")
+        }
         
         // Handle poles separately due to year check
-        let intFirstYear = Int(firstYear) ?? 0
-        let intSecondYear = Int(secondYear) ?? 0
-        
-        if intFirstYear >= 2003 {
+        if year1Int >= 2003 {
             if let poles = await getDriverPolesAsync(season: firstYear, driverId: driverId1) {
                 firstDriverPoles = String(poles)
             } else {
@@ -367,7 +386,7 @@ struct CompareScreen: View {
             firstDriverPoles = "No pole data from before 2003"
         }
         
-        if intSecondYear >= 2003 {
+        if year2Int >= 2003 {
             if let poles = await getDriverPolesAsync(season: secondYear, driverId: driverId2) {
                 secondDriverPoles = String(poles)
             } else {
@@ -379,6 +398,23 @@ struct CompareScreen: View {
         
         print("All data fetched! First poles: \(firstDriverPoles), Second poles: \(secondDriverPoles)")
         isLoading = false
+    }
+
+    // Add this helper function inside CompareScreen
+    func estimateRacesForYear(_ year: Int) -> Int {
+        switch year {
+        case 1950...2002: return 16
+        case 2003...2005: return 18
+        case 2006...2009: return 18
+        case 2010...2011: return 19
+        case 2012...2015: return 19
+        case 2016...2018: return 21
+        case 2019: return 21
+        case 2020: return 17 // COVID year
+        case 2021: return 22
+        case 2022...2023: return 22
+        default: return 20
+        }
     }
 }
 
@@ -772,12 +808,41 @@ struct GameScreen: View{
                 return
             }
             
+            print("Driver 1: races=\(ttlRacesOne), wins=\(firstDriverWins), pts=\(firstDriverPts), pos=\(firstDriverPos)")
+            print("Driver 2: races=\(ttlRacesTwo), wins=\(secondDriverWins), pts=\(secondDriverPts), pos=\(secondDriverPos)")
+
+            // Validate that drivers actually competed (have points or position data)
+            // Position 0 means they weren't classified in the championship
+            if (firstDriverPos == 0 || firstDriverPos > 25) && firstDriverPts < 0.1 {
+                print("Warning: Driver 1 has no valid season data, regenerating...")
+                // Reset state before regenerating
+                resetGameDriverData()
+                generateDrivers()
+                return
+            }
+
+            if (secondDriverPos == 0 || secondDriverPos > 25) && secondDriverPts < 0.1 {
+                print("Warning: Driver 2 has no valid season data, regenerating...")
+                // Reset state before regenerating
+                resetGameDriverData()
+                generateDrivers()
+                return
+            }
+
+            // Ensure races are valid
+            if ttlRacesOne == 0 || ttlRacesTwo == 0 {
+                print("Warning: Invalid race count, regenerating...")
+                resetGameDriverData()
+                generateDrivers()
+                return
+            }
             // Add a small delay to ensure all state updates have propagated
             try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
             
             // Success! Reset attempts counter
             generationAttempts = 0
             isLoading = false
+            
             
             print("Data loading complete and ready!")
         }
@@ -878,6 +943,19 @@ struct GameScreen: View{
         default:
             return "Keep learning about F1! 🏎️"
         }
+    }
+    
+    func resetGameDriverData() {
+        firstDriverWins = -1
+        secondDriverWins = -1
+        firstDriverPts = -1
+        secondDriverPts = -1
+        firstDriverPos = -1
+        secondDriverPos = -1
+        firstDriverPoles = ""
+        secondDriverPoles = ""
+        ttlRacesOne = 0
+        ttlRacesTwo = 0
     }
     
     func resetGame() {

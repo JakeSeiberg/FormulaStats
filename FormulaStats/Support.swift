@@ -11,7 +11,12 @@ func splitName(_ name: String) -> (String, String) {
     return (String(split.first!), split.dropFirst().joined(separator: " "))
 }
 
-func calcScore(wins: Int, poles: String, races: Int, pos: Int, pts: Float) -> Int{
+func calcScore(wins: Int, poles: String, races: Int, pos: Int, pts: Float) -> Int {
+    // Prevent division by zero
+    guard races > 0 else {
+        print("Warning: races is 0, returning 0 score")
+        return 0
+    }
     
     let poleInt = Int(poles) ?? 0
     let winScore = wins * 32
@@ -20,6 +25,5 @@ func calcScore(wins: Int, poles: String, races: Int, pos: Int, pts: Float) -> In
     let posScore = abs(pos-30) * 2
     let subScore = winScore + poleScore + ptsScore + posScore
     
-    
-    return subScore/races
+    return subScore / races
 }
