@@ -707,6 +707,8 @@ struct GameScreen: View{
             print("Fetching data for \(firstName) (\(firstYear)) vs \(secondName) (\(secondYear))")
             
             // Fetch all data in parallel
+            async let races1 = getRacesInSeasonAsync(season: firstYear, driverId: driverId1)
+            async let races2 = getRacesInSeasonAsync(season: secondYear, driverId: driverId2)
             async let wins1 = getDriverWinsAsync(season: firstYear, driverId: driverId1)
             async let wins2 = getDriverWinsAsync(season: secondYear, driverId: driverId2)
             async let pts1 = getPointsInSeasonAsync(season: firstYear, driverID: driverId1)
@@ -714,6 +716,8 @@ struct GameScreen: View{
             async let pos1 = getFinalPositionInSeasonAsync(season: firstYear, driverID: driverId1)
             async let pos2 = getFinalPositionInSeasonAsync(season: secondYear, driverID: driverId2)
             
+            let fetchedRaces1 = await races1 ?? 0
+            let fetchedRaces2 = await races2 ?? 0
             firstDriverWins = await wins1 ?? 0
             secondDriverWins = await wins2 ?? 0
             firstDriverPts = await pts1 ?? 0
@@ -721,12 +725,13 @@ struct GameScreen: View{
             firstDriverPos = await pos1 ?? 0
             secondDriverPos = await pos2 ?? 0
             
-            // Set races to 1 to avoid division by zero - we'll use other stats instead
-            ttlRacesOne = 1
-            ttlRacesTwo = 1
+            // If races data is invalid, estimate from season year
+            // Most F1 seasons have 17-23 races
+            ttlRacesOne = fetchedRaces1 > 0 ? fetchedRaces1 : estimateRacesForYear(Int(firstYear) ?? 2020)
+            ttlRacesTwo = fetchedRaces2 > 0 ? fetchedRaces2 : estimateRacesForYear(Int(secondYear) ?? 2020)
             
-            print("Driver 1: wins=\(firstDriverWins), pts=\(firstDriverPts), pos=\(firstDriverPos)")
-            print("Driver 2: wins=\(secondDriverWins), pts=\(secondDriverPts), pos=\(secondDriverPos)")
+            print("Driver 1: races=\(ttlRacesOne), wins=\(firstDriverWins), pts=\(firstDriverPts), pos=\(firstDriverPos)")
+            print("Driver 2: races=\(ttlRacesTwo), wins=\(secondDriverWins), pts=\(secondDriverPts), pos=\(secondDriverPos)")
             
             // Get poles
             let intFirstYear = Int(firstYear) ?? 0
@@ -767,9 +772,14 @@ struct GameScreen: View{
                 return
             }
             
+            // Add a small delay to ensure all state updates have propagated
+            try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+            
             // Success! Reset attempts counter
             generationAttempts = 0
             isLoading = false
+            
+            print("Data loading complete and ready!")
         }
     }
     
@@ -834,6 +844,22 @@ struct GameScreen: View{
             }
         default:
             return "N/A"
+        }
+    }
+    
+    // Estimate races for a given year (since getRacesInSeason seems broken)
+    func estimateRacesForYear(_ year: Int) -> Int {
+        switch year {
+        case 2003...2005: return 18
+        case 2006...2009: return 18
+        case 2010...2011: return 19
+        case 2012...2015: return 19
+        case 2016...2018: return 21
+        case 2019: return 21
+        case 2020: return 17 // COVID year
+        case 2021: return 22
+        case 2022...2023: return 22
+        default: return 20 // Default estimate
         }
     }
     
